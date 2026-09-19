@@ -6,8 +6,10 @@
 --   retire   = {Squad.<NAME>, ...}                                    removes the squads' members
 --   interact = {slots = {type-4 slots}, active = false, used = false} offers or withdraws a use
 --   music    = section, or {section = section, enabled = false}      selects a music section
+--   perform  = {cells = {type-2 slots}, sequence = "<SEQUENCE SYMBOL>"}
+--              creates each cell's actor playing that sequence of its own action table
 -- They run in that order, after the holder's own scenes. Music plays through the mission's
--- `music_sensor`.
+-- `music_sensor`. A performed actor has no objective: an `assign` once it has landed gives it one.
 local lib = require("lib.mission_lib")
 local common = require("lib.campaign.common")
 
@@ -67,6 +69,11 @@ function actions.check(content)
             assert(holder.interact.used == nil or type(holder.interact.used) == "boolean",
                 where .. " interact used must be a boolean")
         end
+        if holder.perform ~= nil then
+            slots(holder.perform.cells, where .. " perform")
+            assert(type(holder.perform.sequence) == "string",
+                where .. " perform needs a sequence symbol")
+        end
         if holder.music ~= nil then
             lib.one(content.music_sensor, "music sensor")
             local music = music_of(holder.music)
@@ -112,6 +119,15 @@ function actions.declare(content, builder)
         local used = active and interact.used ~= false
         for _, slot in ipairs(interact.slots) do
             context:slot(slot):set_interactable_object{active = active, used = used}
+        end
+    end)
+    -- The sequence is looked up by its symbol in the actor's own table, so no key is written down.
+    builder:action("perform", function(context, _, _, perform)
+        for _, cell in ipairs(perform.cells) do
+            local actor = context:slot(cell)
+            local sequence = lib.one(actor:sequences()[perform.sequence],
+                "actor sequence " .. perform.sequence)
+            actor:run_atoms{spawn = true, atoms = {{kind = "sequence", value = sequence.key}}}
         end
     end)
     builder:action("music", function(context, _, _, value)

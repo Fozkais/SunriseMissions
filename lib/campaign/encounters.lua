@@ -45,6 +45,14 @@ function encounters.check(content, builder)
             assert(type(squads.squads) == "table" and #squads.squads > 0,
                 place.where .. " place needs a nonempty squad list")
         end
+        local assign = place.holder.assign
+        if assign ~= nil then
+            lib.one(assign.objective, place.where .. " assign objective")
+            assert(type(assign.group) == "table" and assign.group.group_index ~= nil,
+                place.where .. " assign needs one mission.TaskGroup group")
+            assert(type(assign.squads) == "table" and #assign.squads > 0,
+                place.where .. " assign needs a nonempty squad list")
+        end
     end
     for _, encounter in ipairs(content.encounters or {}) do
         lib.one(encounter.id, "encounter id")
@@ -61,6 +69,14 @@ function encounters.check(content, builder)
 end
 
 function encounters.declare(content, builder)
+    -- Gives squads already alive their group. A new evaluation would move them onto their task,
+    -- so it keeps the revision the placement or the performance left.
+    builder:action("assign", function(context, _, _, assign)
+        for _, unit in ipairs(assign.squads) do
+            context:slot(unit.source):assign_combat_objective{
+                objective = context:slot(assign.objective), task_group = assign.group}
+        end
+    end)
     -- A sequence item places its own squads later than its encounter does.
     builder:action("place", function(context, _, _, place)
         place_units(context, place.objective, place.squads, place.approach)

@@ -175,6 +175,8 @@ Steps, encounters and sequence items can all carry these:
 | `stop = {mission.scenes.X, ...}` | ends each scene's generation and releases its actors |
 | `music = 8`, `music = {section = 8, enabled = false}` | selects or clears a section of the mission's music |
 | `retire = {Squad.X, ...}` | removes every member of each squad |
+| `perform = {cells = {...}, sequence = "SYMBOL"}` | creates each type-2 cell's actor playing that sequence of its own action table, looked up by symbol; the actor's combat AI takes over when it ends |
+| `assign = {objective = slot, group = task group, squads = {unit(...)}}` | gives squads already alive that group, with no new evaluation, which would move them onto their task |
 | `place = {objective = slot, groups = task groups, squads = {unit(...)}}` | sequence items only: places squads later than the holder does, with the same objective and pathing as an encounter |
 | `interact = {slots = {...}, active = false, used = false}` | offers or withdraws a use on type-4 objects; the row goes out used unless `used = false`, which a hold-to-use object needs |
 
