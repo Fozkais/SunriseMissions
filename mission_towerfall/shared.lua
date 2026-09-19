@@ -11,6 +11,7 @@ local shared = {
     Squad = mission.Squad,
     Directive = mission.Directive,
     scenes = mission.scenes,
+    TaskGroup = mission.TaskGroup,
     unit = campaign.unit,
     line = campaign.line,
     directive_sensor = mission.Slot.M_DIRECTIVE_SENSOR_80B50913,
