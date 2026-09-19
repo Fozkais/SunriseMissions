@@ -127,6 +127,9 @@ squad on that group from its placement and assigns it again, forcing a new evalu
 it reports alive in an attempt. The squad is never moved off it; use it for a group whose own
 movement is the point, such as a Legionary's jetpack approach.
 
+`hold = true` (with `groups`) places the squads on no group: they stand where they are placed until a
+sequence item or step carries `release = {"<encounter id>"}`, after which the pathing routes them.
+
 An `objective` with neither `groups` nor `approach` leaves each squad on no group for good: its combat
 AI picks its own moves, which is how some authored behaviours play, such as a Centurion jetting up to
 face the player.

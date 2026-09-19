@@ -8,6 +8,8 @@
 -- With an approach, every squad starts on that group and is assigned it again, forcing a new
 -- evaluation, the first time it reports alive in an attempt. It is never moved off it, so a
 -- Legionary on a jetpack group makes its own way to the firing area.
+--   hold = true        on an encounter with `groups`: its squads stand where they are placed, on
+--                      no group, until a `release = {"<encounter id>"}` action lets them route
 local lib = require("lib.mission_lib")
 local combat = require("lib.combat")
 local common = require("lib.campaign.common")
@@ -25,6 +27,11 @@ local function ordered(groups)
         if group ~= nil then list[#list + 1] = group end
     end
     return list
+end
+
+-- A hold lasts until its release, and both are per attempt.
+local function released_key(context, id)
+    return "released." .. tostring(context.attempt_generation) .. "." .. id
 end
 
 local function relink(context, event, route, unit)
@@ -59,8 +66,23 @@ local function placing(holder)
 end
 
 function pathing.check(content)
+    local held = {}
+    for _, encounter in ipairs(content.encounters or {}) do
+        if encounter.hold ~= nil then
+            assert(encounter.hold == true and encounter.groups ~= nil,
+                "encounter " .. tostring(encounter.id) .. " holds only with task groups")
+            held[encounter.id] = true
+        end
+    end
     for _, place in ipairs(common.holders(content)) do
         local source = placing(place.holder)
+        local release = place.holder.release
+        if release ~= nil then
+            assert(type(release) == "table" and #release > 0, place.where .. " release needs ids")
+            for _, id in ipairs(release) do
+                assert(held[id], place.where .. " releases an encounter that holds nothing: " .. id)
+            end
+        end
         if source.groups ~= nil then
             assert(source.objective ~= nil, place.where .. " names task groups but no objective")
             assert(type(source.groups) == "table" and #ordered(source.groups) > 0,
@@ -75,12 +97,19 @@ function pathing.check(content)
     end
 end
 
+function pathing.declare(content, builder)
+    builder:action("release", function(context, _, _, ids)
+        for _, id in ipairs(ids) do context:set_variable(released_key(context, id), true) end
+    end)
+end
+
 function pathing.build(content, builder)
     local routes = {}
     for _, place in ipairs(common.holders(content)) do
         local source = placing(place.holder)
         if source.groups ~= nil or source.approach ~= nil then
-            routes[#routes + 1] = {objective = source.objective,
+            routes[#routes + 1] = {id = place.holder.id, hold = place.holder.hold,
+                objective = source.objective,
                 groups = source.groups ~= nil and ordered(source.groups) or nil,
                 approach = source.approach, squads = source.squads or {}}
         end
@@ -95,7 +124,9 @@ function pathing.build(content, builder)
                     if route.approach ~= nil then
                         if reinforce(context, state, event, route, unit) then return end
                     else
-                        relink(context, event, route, unit)
+                        if not route.hold or state:variable(released_key(context, route.id)) then
+                            relink(context, event, route, unit)
+                        end
                         return
                     end
                 end
