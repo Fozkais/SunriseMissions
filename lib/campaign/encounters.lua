@@ -9,12 +9,13 @@ local encounters = {name = "encounters"}
 
 -- Assign the objective before the placement. A squad body that changes after its members exist
 -- reports alive 0 for about a second, and a cohort reads that as cleared. A unit with a count
--- places every member lane at that count instead of the package default.
-local function place_units(context, objective, units)
+-- places every member lane at that count instead of the package default. A unit with no group of
+-- its own starts on the approach group, when the holder names one.
+local function place_units(context, objective, units, approach)
     for _, unit in ipairs(units or {}) do
         if objective ~= nil then
             context:slot(unit.source):assign_combat_objective{
-                objective = context:slot(objective), task_group = unit.group,
+                objective = context:slot(objective), task_group = unit.group or approach,
             }
         end
         local squad = context:squad(unit.squad)
@@ -29,7 +30,7 @@ local function place_units(context, objective, units)
 end
 
 local function populate(content, builder, context, state, encounter)
-    place_units(context, encounter.objective, encounter.squads)
+    place_units(context, encounter.objective, encounter.squads, encounter.approach)
     speak(content, context, encounter)
     builder:run_actions(context, state, encounter)
     if encounter.on_start ~= nil then encounter.on_start(context) end
@@ -62,7 +63,7 @@ end
 function encounters.declare(content, builder)
     -- A sequence item places its own squads later than its encounter does.
     builder:action("place", function(context, _, _, place)
-        place_units(context, place.objective, place.squads)
+        place_units(context, place.objective, place.squads, place.approach)
     end)
     local placed = {}
     for _, encounter in ipairs(content.encounters or {}) do placed[encounter.id] = encounter end
