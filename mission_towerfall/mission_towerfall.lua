@@ -5,6 +5,7 @@ local shared = require("mission_towerfall.shared")
 
 local bubbles = {
     require("mission_towerfall.underwatch"),
+    require("mission_towerfall.military"),
 }
 
 local legs, steps, encounters, omit = {}, {}, {}, {}
@@ -18,8 +19,13 @@ for _, bubble in ipairs(bubbles) do
     append(omit, bubble.omit)
 end
 
+-- Development only: opens the mission in a later bubble with the earlier steps counted as played.
+-- Set to nil for a full run.
+local DEBUG_START = nil
+
 return campaign.new{
     key = "towerfall",
+    debug_start = DEBUG_START,
     directive_sensor = shared.directive_sensor,
     dialogue_sensor = shared.dialogue_sensor,
     music_sensor = shared.music_sensor,
