@@ -42,6 +42,7 @@ campaign.capabilities = {
     require("lib.campaign.intro"),
     require("lib.campaign.core"),
     require("lib.campaign.encounters"),
+    require("lib.campaign.pathing"),
     require("lib.campaign.scenes"),
     require("lib.campaign.actions"),
     require("lib.campaign.sequence"),
