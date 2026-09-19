@@ -122,6 +122,15 @@ default, for a squad whose scene needs its full cast.
 the least: on every squad state the client reports the cost of each group, the squad moves when another
 group is cheaper and stays put on a tie. Without `groups` a squad keeps the group it was assigned.
 
+`approach = mission.TaskGroup.<OBJECTIVE>.GROUP_<n>` (with `objective`, instead of `groups`) puts every
+squad on that group from its placement and assigns it again, forcing a new evaluation, the first time
+it reports alive in an attempt. The squad is never moved off it; use it for a group whose own
+movement is the point, such as a Legionary's jetpack approach.
+
+An `objective` with neither `groups` nor `approach` leaves each squad on no group for good: its combat
+AI picks its own moves, which is how some authored behaviours play, such as a Centurion jetting up to
+face the player.
+
 ### Scenes
 
 ```lua
