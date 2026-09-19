@@ -15,12 +15,16 @@
 local lib = require("lib.mission_lib")
 local flow = require("lib.flow")
 local common = require("lib.campaign.common")
+local EventKind = require("sunrise.activity_sdk").EventKind
 
 local sequence = {name = "sequence"}
 
 -- Each item takes up to two flow steps and one fact, and a flow holds 64 of each.
 local ITEM_LIMIT = 32
 local WAITS = {"on", "finished", "interacted", "cleared"}
+-- A slot also shows up in other events, such as an object's state when it appears, so a wait on
+-- a report only counts the event kind that is that report.
+local REPORTS = {finished = EventKind.SCENE_FINISHED, interacted = EventKind.OBJECT_INTERACTED}
 
 local function sequenced(content)
     local result = {}
@@ -129,8 +133,10 @@ function sequence.build(content, builder)
                 wait = flow.all(reached, flow.fact(id))
             elseif item.finished ~= nil or item.interacted ~= nil then
                 local id, target = "ev" .. index, item.finished or item.interacted
+                local kind = item.finished ~= nil and REPORTS.finished or REPORTS.interacted
                 facts[#facts + 1] = {id = id, observe = function(context, state, event)
-                    return reached(context, state) and lib.is_slot(context, event, target)
+                    return event.kind == kind and reached(context, state)
+                        and lib.is_slot(context, event, target)
                 end}
                 wait = flow.all(reached, flow.fact(id))
             elseif item.cleared ~= nil then
