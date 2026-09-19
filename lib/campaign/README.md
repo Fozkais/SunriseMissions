@@ -60,6 +60,7 @@ Rules:
 | `spawn_set` | spawn set hash the arrival filters its points by |
 | `omit` | object slots kept out of every seed until something activates them |
 | `finish` | `function(context)` run once the last step ends, before the mission completes |
+| `debug_start` | development only, `{leg = "<leg id>", step = "<step id>"}`: opens the mission in that leg with every step up to the named one counted as played; see [Debug start](#debug-start) |
 
 ### Legs
 
@@ -179,6 +180,17 @@ Steps, encounters and sequence items can all carry these:
 | `assign = {objective = slot, group = task group, squads = {unit(...)}}` | gives squads already alive that group, with no new evaluation, which would move them onto their task |
 | `place = {objective = slot, groups = task groups, squads = {unit(...)}}` | sequence items only: places squads later than the holder does, with the same objective and pathing as an encounter |
 | `interact = {slots = {...}, active = false, used = false}` | offers or withdraws a use on type-4 objects; the row goes out used unless `used = false`, which a hold-to-use object needs |
+
+### Debug start
+
+```lua
+debug_start = {leg = "hangar", step = "find_zavala"}
+```
+
+Opens the mission in the named leg as if it had been played up to the named step. The step shows
+the last goal an earlier step left and ends at once, so the step after it starts on arrival. The
+earlier steps, the encounters waiting on them or on the arrival and the intro cutscenes are dropped;
+nothing else they did is replayed, music included. Set it to `nil` for a full run.
 
 ### Cutscenes
 

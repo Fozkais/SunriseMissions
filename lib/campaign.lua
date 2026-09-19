@@ -56,11 +56,12 @@ campaign.capabilities = {
 --- Builds the mission table from a content declaration.
 --- @param content Table with key, sensors, legs with their trigger and monitor lists, steps and
 --- encounters, an optional intro list of {state, cinematic} cutscenes played before the first
---- leg, and an optional spawn_set naming the launch points the client filters its spawn by. Each
+--- leg, an optional spawn_set naming the launch points the client filters its spawn by, and an
+--- optional debug_start opening the mission at a later step (see lib/campaign/debug.lua). Each
 --- capability's header lists the further fields it reads.
 --- @return The table the runtime loads: initial_state, on_start, on_load and event handlers.
 function campaign.new(content)
-    return builder.assemble(content, campaign.capabilities)
+    return builder.assemble(require("lib.campaign.debug").apply(content), campaign.capabilities)
 end
 
 return campaign
