@@ -327,13 +327,14 @@ again. When the outro ends, the last step is done and the mission completes.
 |---|---|
 | `intro` | opening cutscenes and the held spawn |
 | `core` | legs, steps, goals, the main chain and completion |
-| `encounters` | squad placement and the `clear` end |
+| `encounters` | squad placement, the `place` and `assign` actions and the `clear` end |
 | `scenes` | `scenes` entries: bind, activation, event keys |
-| `actions` | `move`, `objects`, `signal`, `stop`, `music`, `retire`, `interact` |
+| `actions` | `move`, `objects`, `signal`, `stop`, `music`, `retire`, `interact`, `perform` |
 | `sequence` | `sequence` and the `sequence` end |
 | `cutscenes` | `cutscene` and the `cutscene` end |
 | `checkpoints` | `spawn_set`, wipes and replays |
 | `dialogue` | the `spoken` wait and end; needs a Sunrise build with `dialogue_finished` events |
+| `pathing` | `groups`, `approach`, `hold` and the `release` action |
 
 A capability is a module with a `name` and up to three passes. Each pass runs for every capability,
 in list order, before the next pass starts:
