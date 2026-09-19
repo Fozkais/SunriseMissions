@@ -52,6 +52,7 @@ Rules:
 | `key` | prefix of every variable and timer the mission owns; keep it short and unique |
 | `directive_sensor` | type-68 slot the goals are shown through |
 | `dialogue_sensor` | type-53 slot the lines play through; needed as soon as anything has `lines` |
+| `music_sensor` | type-11 slot the music plays through; needed as soon as anything has `music` |
 | `legs` | the regions the mission crosses, in play order; the first is where it starts |
 | `steps` | the goal chain, in order |
 | `encounters` | squads and beats placed when their step has started and their volume reported |
@@ -100,6 +101,7 @@ makes a wipe in that region restart the party at that set.
 | `destroyed = {slots}` | every listed object was destroyed |
 | `sequence = true` | the step's own sequence finished |
 | `cutscene = true` | the step's own cutscene ended |
+| `spoken = cue` | the cue, played by the script, finished in this attempt |
 
 ### Encounters
 
@@ -137,6 +139,7 @@ for at most one event, then for its delay, then acts:
 | `finished = slot` | the scene slot reported finished after the previous item acted |
 | `interacted = slot` | the object reported a use after the previous item acted |
 | `cleared = "<encounter id>"` or a list | every squad of those encounters is gone |
+| `spoken = cue` | the cue, played by the script, finished in this attempt; a finish before the item is reached counts |
 | `after_ms = n` | n milliseconds passed after the wait held |
 
 An item acts with `lines`, `scenes`, `cutscene`, any action, then `run(context, state)`.
@@ -151,6 +154,9 @@ Steps, encounters and sequence items can all carry these:
 | `objects = {slots = {...}, active = false}` | activates or removes type-4 objects |
 | `signal = {scene = mission.scenes.X, keys = {...}}` | sends keys to a scene that is already active |
 | `stop = {mission.scenes.X, ...}` | ends each scene's generation and releases its actors |
+| `music = 8`, `music = {section = 8, enabled = false}` | selects or clears a section of the mission's music |
+| `retire = {Squad.X, ...}` | removes every member of each squad |
+| `interact = {slots = {...}, active = false, used = false}` | offers or withdraws a use on type-4 objects; the row goes out used unless `used = false`, which a hold-to-use object needs |
 
 ### Cutscenes
 
@@ -289,10 +295,11 @@ again. When the outro ends, the last step is done and the mission completes.
 | `core` | legs, steps, goals, the main chain and completion |
 | `encounters` | squad placement and the `clear` end |
 | `scenes` | `scenes` entries: bind, activation, event keys |
-| `actions` | `move`, `objects`, `signal`, `stop` |
+| `actions` | `move`, `objects`, `signal`, `stop`, `music`, `retire`, `interact` |
 | `sequence` | `sequence` and the `sequence` end |
 | `cutscenes` | `cutscene` and the `cutscene` end |
 | `checkpoints` | `spawn_set`, wipes and replays |
+| `dialogue` | the `spoken` wait and end; needs a Sunrise build with `dialogue_finished` events |
 
 A capability is a module with a `name` and up to three passes. Each pass runs for every capability,
 in list order, before the next pass starts:
@@ -301,7 +308,7 @@ in list order, before the next pass starts:
 local example = {name = "example"}
 
 function example.check(content, builder) end    -- validate the fields this capability owns
-function example.declare(content, builder) end  -- services, step end kinds, holder actions
+function example.declare(content, builder) end  -- services, end kinds, wait kinds, actions
 function example.build(content, builder) end    -- facts, graphs, handlers, start and load hooks
 
 return example
@@ -312,7 +319,8 @@ return example
 | `provide(name, service)`, `find(name)`, `need(name)` | share a service between capabilities |
 | `action(field, fn(context, state, holder, value))` | what a field does on a step, an encounter or a sequence item; actions run in registration order |
 | `run_actions(context, state, holder)` | run every action the holder carries |
-| `end_kind(name, {facts = fn, options = fn})` | a new `ends` field; `options` returns flow conditions |
+| `end_kind(name, fn(step, value))` | a new `ends` field; `fn` returns the flow conditions that end the step |
+| `wait_kind(name, fn(value))` | a new sequence wait; `fn` returns the flow condition that holds once it is met |
 | `on(handler, fn(context, state, event))` | add a part to a runtime handler; parts run in capability order |
 | `on_start(fn)`, `on_load(fn)` | run before the graphs advance on start or after a reattach |
 | `graph(flow)` | add a flow graph; graphs handle and advance in the order added |
