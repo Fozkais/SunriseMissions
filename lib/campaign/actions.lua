@@ -3,7 +3,9 @@
 --   objects = {slots = {type-4 slots}, active = false}
 --   signal  = {scene = mission.scenes.<NAME>, keys = {event keys}}  keys for an active scene
 --   stop    = {mission.scenes.<NAME>, ...}                           ends each scene's generation
--- They run in that order, after the holder's own scenes.
+--   music   = section, or {section = section, enabled = false}       selects a music section
+-- They run in that order, after the holder's own scenes. Music plays through the mission's
+-- `music_sensor`.
 local lib = require("lib.mission_lib")
 local common = require("lib.campaign.common")
 
@@ -17,6 +19,15 @@ end
 local function scene(value, where)
     assert(type(value) == "table" and type(value.id) == "string",
         where .. " must name a mission.scenes entry")
+end
+
+-- A music sensor holds 128 sections.
+local MUSIC_SECTIONS = 128
+
+-- `music = 8` is short for `music = {section = 8}`.
+local function music_of(value)
+    if type(value) == "table" then return value end
+    return {section = value}
 end
 
 function actions.check(content)
@@ -46,10 +57,19 @@ function actions.check(content)
             assert(type(holder.stop) == "table" and #holder.stop > 0, where .. " stop needs scenes")
             for number = 1, #holder.stop do scene(holder.stop[number], where .. " stop") end
         end
+        if holder.music ~= nil then
+            lib.one(content.music_sensor, "music sensor")
+            local music = music_of(holder.music)
+            assert(math.type(music.section) == "integer" and music.section >= 0
+                and music.section < MUSIC_SECTIONS,
+                where .. " music section must be an integer below " .. MUSIC_SECTIONS)
+            assert(music.enabled == nil or type(music.enabled) == "boolean",
+                where .. " music enabled must be a boolean")
+        end
     end
 end
 
-function actions.declare(_, builder)
+function actions.declare(content, builder)
     builder:action("move", function(context, _, _, move)
         local transition = context.sdk.device_transitions[move.to]
         for _, slot in ipairs(move.slots) do
@@ -65,6 +85,11 @@ function actions.declare(_, builder)
     end)
     builder:action("stop", function(context, _, _, list)
         for _, target in ipairs(list) do context:scene(target.id):stop{} end
+    end)
+    builder:action("music", function(context, _, _, value)
+        local music = music_of(value)
+        context:slot(content.music_sensor):set_music_section{
+            section = music.section, enabled = music.enabled}
     end)
 end
 
