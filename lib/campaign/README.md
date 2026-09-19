@@ -115,6 +115,9 @@ An encounter places once its `after` step has started (default: the arrival) and
 `objective` is assigned to every squad before it is placed. Encounters also take `scenes`,
 `cutscene`, `sequence`, actions and `on_start`, run when they place.
 
+`unit(squad, source, group, count)` places every member lane at `count` instead of the package
+default, for a squad whose scene needs its full cast.
+
 `groups = mission.TaskGroup.<OBJECTIVE>` (with `objective`) sends each squad to the task group that costs
 the least: on every squad state the client reports the cost of each group, the squad moves when another
 group is cheaper and stays put on a tie. Without `groups` a squad keeps the group it was assigned.
@@ -160,6 +163,7 @@ Steps, encounters and sequence items can all carry these:
 | `stop = {mission.scenes.X, ...}` | ends each scene's generation and releases its actors |
 | `music = 8`, `music = {section = 8, enabled = false}` | selects or clears a section of the mission's music |
 | `retire = {Squad.X, ...}` | removes every member of each squad |
+| `place = {objective = slot, groups = task groups, squads = {unit(...)}}` | sequence items only: places squads later than the holder does, with the same objective and pathing as an encounter |
 | `interact = {slots = {...}, active = false, used = false}` | offers or withdraws a use on type-4 objects; the row goes out used unless `used = false`, which a hold-to-use object needs |
 
 ### Cutscenes

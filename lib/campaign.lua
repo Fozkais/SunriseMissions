@@ -10,8 +10,10 @@ local campaign = {}
 --- @param squad Generated squad identity.
 --- @param source Generated slot identity for the same squad.
 --- @param group Optional extracted task group for the encounter objective.
-function campaign.unit(squad, source, group)
-    return {squad = lib.one(squad, "squad"), source = lib.one(source, "squad slot"), group = group}
+--- @param count Optional member count placed in every lane, instead of the package default.
+function campaign.unit(squad, source, group, count)
+    return {squad = lib.one(squad, "squad"), source = lib.one(source, "squad slot"), group = group,
+        count = count}
 end
 
 --- A dialogue cue and the volume the client holds it for.

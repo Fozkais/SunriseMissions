@@ -2,9 +2,11 @@
 -- the group that costs the least. The client reports every group's cost with each squad state.
 -- A squad moves when another group is cheaper and stays put on a tie, which keeps it from
 -- swapping between two zones whose quantised costs alternate.
---   groups = mission.TaskGroup.<OBJECTIVE>   on an encounter that also names its `objective`
+--   groups = mission.TaskGroup.<OBJECTIVE>   on an encounter that also names its `objective`, or
+--                                            inside the `place` of a sequence item
 local lib = require("lib.mission_lib")
 local combat = require("lib.combat")
+local common = require("lib.campaign.common")
 
 local pathing = {name = "pathing"}
 
@@ -30,22 +32,29 @@ local function relink(context, event, route, unit)
     context:slot(unit.source):assign_combat_objective{objective = objective, task_group = selected}
 end
 
+-- An encounter places its own squads; a sequence item places through `place`.
+local function placing(holder)
+    return holder.place or holder
+end
+
 function pathing.check(content)
-    for _, encounter in ipairs(content.encounters or {}) do
-        if encounter.groups ~= nil then
-            assert(encounter.objective ~= nil, encounter.id .. " names task groups but no objective")
-            assert(type(encounter.groups) == "table" and #ordered(encounter.groups) > 0,
-                encounter.id .. " groups must be a mission.TaskGroup entry")
+    for _, place in ipairs(common.holders(content)) do
+        local source = placing(place.holder)
+        if source.groups ~= nil then
+            assert(source.objective ~= nil, place.where .. " names task groups but no objective")
+            assert(type(source.groups) == "table" and #ordered(source.groups) > 0,
+                place.where .. " groups must be a mission.TaskGroup entry")
         end
     end
 end
 
 function pathing.build(content, builder)
     local routes = {}
-    for _, encounter in ipairs(content.encounters or {}) do
-        if encounter.groups ~= nil then
-            routes[#routes + 1] = {objective = encounter.objective,
-                groups = ordered(encounter.groups), squads = encounter.squads or {}}
+    for _, place in ipairs(common.holders(content)) do
+        local source = placing(place.holder)
+        if source.groups ~= nil then
+            routes[#routes + 1] = {objective = source.objective,
+                groups = ordered(source.groups), squads = source.squads or {}}
         end
     end
     if #routes == 0 then return end
