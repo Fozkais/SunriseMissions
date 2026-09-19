@@ -7,6 +7,7 @@
 --   finished = scene slot              the scene reports finished after the previous item acted
 --   interacted = object slot           the object reports a use after the previous item acted
 --   cleared = {encounter ids}          every squad of those encounters is gone
+--   any wait another capability registers, such as `spoken`
 --   after_ms = milliseconds            counted once the event holds
 --   lines, scenes, move, objects, signal, stop, run(context, state)   the action, in that order
 -- A step can end when its sequence has finished: `ends = {sequence = true}`.
@@ -47,11 +48,6 @@ function sequence.check(content, builder)
             local where = place.where .. " sequence " .. index
             local item = lib.one(items[index], where)
             assert(item.sequence == nil, where .. " cannot hold a sequence")
-            local waits = 0
-            for _, wait in ipairs(WAITS) do
-                if item[wait] ~= nil then waits = waits + 1 end
-            end
-            assert(waits <= 1, where .. " waits on more than one event")
             if item.on ~= nil then
                 assert(legs.armed[item.on] or legs.watched[item.on],
                     where .. " waits on a volume no leg arms or watches")
@@ -108,6 +104,16 @@ function sequence.build(content, builder)
         end
         local previous = nil
         for index, item in ipairs(holder.sequence) do
+            -- Extra wait kinds are registered in declare, after this capability's check.
+            local waits, extra = 0, nil
+            for _, wait in ipairs(WAITS) do
+                if item[wait] ~= nil then waits = waits + 1 end
+            end
+            for _, name in ipairs(builder.wait_kind_names) do
+                if item[name] ~= nil then waits, extra = waits + 1, name end
+            end
+            assert(waits <= 1,
+                place.where .. " sequence " .. index .. " waits on more than one event")
             local before = previous
             -- The item before has acted, or this is the first item and its holder has begun.
             local function reached(context, state)
@@ -129,6 +135,8 @@ function sequence.build(content, builder)
                 wait = flow.all(reached, flow.fact(id))
             elseif item.cleared ~= nil then
                 wait = flow.all(reached, encounters.cleared(common.list(item.cleared)))
+            elseif extra ~= nil then
+                wait = flow.all(reached, builder.wait_kinds[extra](item[extra]))
             end
             local after = before ~= nil and {before} or nil
             if item.after_ms ~= nil then

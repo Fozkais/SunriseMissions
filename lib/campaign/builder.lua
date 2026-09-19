@@ -2,7 +2,7 @@
 -- A capability is a table with a name and up to three passes, each run for every capability in
 -- list order before the next pass starts:
 --   check(content, builder)    validates the content fields it owns
---   declare(content, builder)  provides services, end kinds and holder actions others build on
+--   declare(content, builder)  provides services, end kinds, wait kinds and holder actions
 --   build(content, builder)    adds facts, graphs, handlers and start or load hooks
 local builder = {}
 
@@ -31,6 +31,14 @@ function Builder:end_kind(name, options)
     assert(self.end_kinds[name] == nil, "campaign end kind registered twice: " .. name)
     self.end_kinds[name] = options
     self.end_kind_names[#self.end_kind_names + 1] = name
+end
+
+--- Registers an extra sequence wait, named by its item field.
+--- @param condition function(value) returning a flow condition that holds once the wait is met.
+function Builder:wait_kind(name, condition)
+    assert(self.wait_kinds[name] == nil, "campaign wait kind registered twice: " .. name)
+    self.wait_kinds[name] = condition
+    self.wait_kind_names[#self.wait_kind_names + 1] = name
 end
 
 --- Registers what a holder field does when its step starts, its encounter places or its sequence
@@ -118,7 +126,7 @@ end
 function builder.assemble(content, capabilities)
     local self = setmetatable({
         services = {}, end_kinds = {}, end_kind_names = {},
-        actions = {}, action_fields = {},
+        actions = {}, action_fields = {}, wait_kinds = {}, wait_kind_names = {},
         handlers = {}, handler_names = {}, start_hooks = {}, load_hooks = {}, graphs = {},
         handle_hooks = {}, holds = {},
         initial = {},

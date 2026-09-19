@@ -9,7 +9,8 @@ function common.list(value)
 end
 
 --- Lists every table that can carry actions: steps, encounters and their sequence items.
---- @return A list of {where = description for errors, holder = the table}.
+--- @return A list of {where = description for errors, holder = the table, item = true for a
+--- sequence item}.
 function common.holders(content)
     local result = {}
     local function add(where, holder)
@@ -19,7 +20,7 @@ function common.holders(content)
             for index = 1, #items do
                 if type(items[index]) == "table" then
                     result[#result + 1] = {where = where .. " sequence " .. index,
-                        holder = items[index]}
+                        holder = items[index], item = true}
                 end
             end
         end
