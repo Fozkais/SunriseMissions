@@ -1,9 +1,11 @@
 -- Declarative world changes any step, encounter or sequence item can carry:
---   move    = {to = "<device transition>", slots = {type-23 slots}, snap = true}
---   objects = {slots = {type-4 slots}, active = false}
---   signal  = {scene = mission.scenes.<NAME>, keys = {event keys}}  keys for an active scene
---   stop    = {mission.scenes.<NAME>, ...}                           ends each scene's generation
---   music   = section, or {section = section, enabled = false}       selects a music section
+--   move     = {to = "<device transition>", slots = {type-23 slots}, snap = true}
+--   objects  = {slots = {type-4 slots}, active = false}
+--   signal   = {scene = mission.scenes.<NAME>, keys = {event keys}}  keys for an active scene
+--   stop     = {mission.scenes.<NAME>, ...}                           ends each scene's generation
+--   retire   = {Squad.<NAME>, ...}                                    removes the squads' members
+--   interact = {slots = {type-4 slots}, active = false, used = false} offers or withdraws a use
+--   music    = section, or {section = section, enabled = false}      selects a music section
 -- They run in that order, after the holder's own scenes. Music plays through the mission's
 -- `music_sensor`.
 local lib = require("lib.mission_lib")
@@ -57,6 +59,14 @@ function actions.check(content)
             assert(type(holder.stop) == "table" and #holder.stop > 0, where .. " stop needs scenes")
             for number = 1, #holder.stop do scene(holder.stop[number], where .. " stop") end
         end
+        if holder.retire ~= nil then slots(holder.retire, where .. " retire") end
+        if holder.interact ~= nil then
+            slots(holder.interact.slots, where .. " interact")
+            assert(holder.interact.active == nil or type(holder.interact.active) == "boolean",
+                where .. " interact active must be a boolean")
+            assert(holder.interact.used == nil or type(holder.interact.used) == "boolean",
+                where .. " interact used must be a boolean")
+        end
         if holder.music ~= nil then
             lib.one(content.music_sensor, "music sensor")
             local music = music_of(holder.music)
@@ -85,6 +95,24 @@ function actions.declare(content, builder)
     end)
     builder:action("stop", function(context, _, _, list)
         for _, target in ipairs(list) do context:scene(target.id):stop{} end
+    end)
+    -- A squad has no retire call: placing it again with every count at zero removes its members.
+    builder:action("retire", function(context, _, _, list)
+        for _, id in ipairs(list) do
+            local squad = context:squad(id)
+            local counts = squad:counts()
+            for lane = 1, counts.count do counts:set(lane, 0) end
+            squad:place{counts = counts, mode = context.sdk.squad_modes.replace}
+        end
+    end)
+    -- The use row is sent as used by default, since a row not used yet shows a generic prompt.
+    -- `used = false` sends it fresh instead, for an object whose use is not a one-off.
+    builder:action("interact", function(context, _, _, interact)
+        local active = interact.active ~= false
+        local used = active and interact.used ~= false
+        for _, slot in ipairs(interact.slots) do
+            context:slot(slot):set_interactable_object{active = active, used = used}
+        end
     end)
     builder:action("music", function(context, _, _, value)
         local music = music_of(value)
