@@ -115,6 +115,10 @@ An encounter places once its `after` step has started (default: the arrival) and
 `objective` is assigned to every squad before it is placed. Encounters also take `scenes`,
 `cutscene`, `sequence`, actions and `on_start`, run when they place.
 
+`groups = mission.TaskGroup.<OBJECTIVE>` (with `objective`) sends each squad to the task group that costs
+the least: on every squad state the client reports the cost of each group, the squad moves when another
+group is cheaper and stays put on a tie. Without `groups` a squad keeps the group it was assigned.
+
 ### Scenes
 
 ```lua
