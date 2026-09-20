@@ -7,6 +7,7 @@ local bubbles = {
     require("mission_towerfall.underwatch"),
     require("mission_towerfall.military"),
     require("mission_towerfall.plaza"),
+    require("mission_towerfall.boulevard"),
 }
 
 local legs, steps, encounters, omit = {}, {}, {}, {}
