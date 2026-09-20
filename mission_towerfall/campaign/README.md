@@ -82,6 +82,7 @@ makes a wipe in that region restart the party at that set.
 | `lines` | `{line(cue), line(cue, filter_volume)}` played when the step starts |
 | `ends` | what finishes the step, see below; a step with no end finishes at once |
 | `barrier = true` | only the step's own end finishes it; otherwise any later step's trigger, monitor or region also does |
+| `revisit = true` | the step arms its own triggers when it starts, and they count only from then; no leg may arm them, since a trigger armed twice never reports again |
 | `checkpoint = true` | a wipe from here on replays this step and what follows; what came before stays done |
 | `scenes`, `cutscene`, `sequence`, actions | see below; they run when the step starts |
 | `scene` | a scene id activated with no bind and no keys (plain activation) |
@@ -95,10 +96,12 @@ makes a wipe in that region restart the party at that set.
 | `monitor = slot` or a list | a player entered the type-30 volume |
 | `region = "<leg id>"` | the client changed to that leg's region; before that, anything sent to the region's slots is refused |
 | `clear = "<encounter id>"` or a list | every squad of those encounters is gone, the ones their sequence items place included |
+| `ghost_link = slot` | the Ghost scan started and completed |
 | `interact = slot` | the object was used (its interaction row is sent when the step starts) |
 | `scene = slot` | the type-43 scene slot reported finished |
 | `health = {slot = slot, at = 0.5}` | the combatant's health fell to that fraction |
 | `destroyed = {slots}` | every listed object was destroyed |
+| `kills = {objective = slot, count = n, of = {unit(...)}, gone = {unit(...)}, settle_ms = 20000}` | the objective's task counters rose by `n` kills since the step started (counts squads a cohort never sees alive), and the `gone` squads, which the objective does not count, have no member alive; with `of`, the squads the count is made of, the end also holds once `settle_ms` have passed and every member the client created for them is dead |
 | `fell = {slots = {...}, below = 0.5, count = n}` | `count` (default all) of the type-23 devices reported a position at or above `from` (default 1) and then one below `below`; the falls are kept per device, so steps counting up share one list |
 | `sequence = true` | the step's own sequence finished |
 | `cutscene = true` | the step's own cutscene ended |
@@ -177,6 +180,10 @@ Steps, encounters and sequence items can all carry these:
 | `music = 8`, `music = {section = 8, enabled = false}` | selects or clears a section of the mission's music |
 | `retire = {Squad.X, ...}` | removes every member of each squad |
 | `perform = {cells = {...}, sequence = "SYMBOL"}` | creates each type-2 cell's actor playing that sequence of its own action table, looked up by symbol; the actor's combat AI takes over when it ends |
+| `travel = {cell = slot, path = slot, spawn = false}` | flies the type-2 cell's actor along that authored path (type 58) of its registry, such as a dropship's entrance; the actor is created for it unless `spawn = false` names a live one |
+| `effect = {slot = slot, filter = slot, target = slot, enabled = false, arm = false}` | attaches the type-26 hop-on's authored effect (a shield, a hazard, a fade) to what its type-34 filter selects: every player, or the `target` type-4 object, unless `arm = false` leaves the filter as authored; `enabled = false` removes it; each call is a new revision |
+| `toggle = {slot = slot, state = 1, target = slot}` | sets a type-32 toggle sensor; the state (-1 to 2) and the target mean what the content makes of them |
+| `ghost_link = slot` | arms the type-65 Ghost link ahead of the step that ends on it; that step then leaves it armed, since arming a link again resets its interaction |
 | `assign = {objective = slot, group = task group, squads = {unit(...)}}` | gives squads already alive that group, with no new evaluation, which would move them onto their task |
 | `place = {objective = slot, groups = task groups, squads = {unit(...)}}` | sequence items only: places squads later than the holder does, with the same objective and pathing as an encounter |
 | `interact = {slots = {...}, active = false, used = false}` | offers or withdraws a use on type-4 objects; the row goes out used unless `used = false`, which a hold-to-use object needs |

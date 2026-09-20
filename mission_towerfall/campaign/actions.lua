@@ -8,6 +8,17 @@
 --   music    = section, or {section = section, enabled = false}      selects a music section
 --   perform  = {cells = {type-2 slots}, sequence = "<SEQUENCE SYMBOL>"}
 --              creates each cell's actor playing that sequence of its own action table
+--   travel   = {cell = type-2 slot, path = type-58 slot, spawn = false}
+--              flies the cell's actor along that authored path of its registry, such as a
+--              dropship's entrance; created for it unless `spawn = false` names a live one
+--   effect   = {slot = type-26 hop-on, filter = type-34 filter, target = type-4 object,
+--               enabled = false, arm = false}
+--              attaches the hop-on's authored effect (a shield, a hazard, a fade) to what the
+--              filter selects: every player, or the `target` object, unless `arm = false`
+--              leaves the filter as authored. `enabled = false` removes it. Each call is a new
+--              revision.
+--   toggle   = {slot = type-32 sensor, state = 1, target = slot}
+--              sets an authored toggle; what a state and its target mean is the content's
 -- They run in that order, after the holder's own scenes. Music plays through the mission's
 -- `music_sensor`. A performed actor has no objective: an `assign` once it has landed gives it one.
 local lib = require("lib.mission_lib")
@@ -74,6 +85,30 @@ function actions.check(content)
             assert(type(holder.perform.sequence) == "string",
                 where .. " perform needs a sequence symbol")
         end
+        if holder.travel ~= nil then
+            lib.one(holder.travel.cell, where .. " travel cell")
+            lib.one(holder.travel.path, where .. " travel path")
+            assert(holder.travel.spawn == nil or type(holder.travel.spawn) == "boolean",
+                where .. " travel spawn must be a boolean")
+        end
+        if holder.effect ~= nil then
+            lib.one(holder.effect.slot, where .. " effect slot")
+            assert(holder.effect.enabled == nil or type(holder.effect.enabled) == "boolean",
+                where .. " effect enabled must be a boolean")
+            assert(holder.effect.arm == nil or type(holder.effect.arm) == "boolean",
+                where .. " effect arm must be a boolean")
+            if holder.effect.target ~= nil then lib.one(holder.effect.target, where .. " effect target") end
+            if holder.effect.enabled ~= false then
+                lib.one(holder.effect.filter, where .. " effect filter")
+            end
+        end
+        if holder.toggle ~= nil then
+            lib.one(holder.toggle.slot, where .. " toggle slot")
+            assert(holder.toggle.state == nil or (math.type(holder.toggle.state) == "integer"
+                and holder.toggle.state >= -1 and holder.toggle.state <= 2),
+                where .. " toggle state must be an integer from -1 to 2")
+            if holder.toggle.target ~= nil then lib.one(holder.toggle.target, where .. " toggle target") end
+        end
         if holder.music ~= nil then
             lib.one(content.music_sensor, "music sensor")
             local music = music_of(holder.music)
@@ -129,6 +164,32 @@ function actions.declare(content, builder)
                 "actor sequence " .. perform.sequence)
             actor:run_atoms{spawn = true, atoms = {{kind = "sequence", value = sequence.key}}}
         end
+    end)
+    builder:action("travel", function(context, _, _, travel)
+        context:slot(travel.cell):play_actor_path{
+            path = context:slot(travel.path), spawn = travel.spawn ~= false}
+    end)
+    -- The filter selects the players; a new revision re-attaches the effect, so each call takes
+    -- the next one, kept per hop-on in a mission variable.
+    builder:action("effect", function(context, state, _, effect)
+        local key = content.key .. ".effect." .. effect.slot
+        local revision = (state:variable(key) or 0) + 1
+        context:set_variable(key, revision)
+        local enabled = effect.enabled ~= false
+        if enabled and effect.arm ~= false then
+            if effect.target ~= nil then
+                context:slot(effect.filter):set_object_filter{target = context:slot(effect.target)}
+            else
+                context:slot(effect.filter):set_object_filter{players = true}
+            end
+        end
+        context:slot(effect.slot):set_mission_effect{
+            filter = enabled and context:slot(effect.filter) or nil,
+            enabled = enabled, revision = revision}
+    end)
+    builder:action("toggle", function(context, _, _, toggle)
+        context:slot(toggle.slot):set_toggle{state = toggle.state or 1,
+            target = toggle.target ~= nil and context:slot(toggle.target) or nil}
     end)
     builder:action("music", function(context, _, _, value)
         local music = music_of(value)
