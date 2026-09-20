@@ -1,6 +1,6 @@
 # Campaign kit
 
-`lib/campaign` turns one declarative table into a complete mission script. A mission file says
+`mission_towerfall/campaign` turns one declarative table into a complete mission script. A mission file says
 *what* happens: where the player goes, which goal shows, which squads, scenes, beats and cutscenes
 play, and what ends each step. The kit does the rest: event handlers, durable progress, trigger
 arming, reattach, wipes and replays, and mission completion. A mission file holds no `on_event_*`
@@ -19,7 +19,7 @@ A mission lives in `<activity>/<activity>.lua` and returns `campaign.new{...}`:
 ```lua
 local missions = require("missions")
 local mission = require(missions.MISSION_TOWERFALL)
-local campaign = require("lib.campaign")
+local campaign = require("mission_towerfall.campaign")
 local unit, line = campaign.unit, campaign.line
 local Slot, Squad, Directive = mission.Slot, mission.Squad, mission.Directive
 local cue = mission.DialogueCue.M_DIALOG_SENSOR_80B50913

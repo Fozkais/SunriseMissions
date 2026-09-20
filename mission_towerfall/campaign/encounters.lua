@@ -2,7 +2,7 @@
 -- They live in a second graph, so each graph stays inside the step and fact limits.
 local lib = require("lib.mission_lib")
 local flow = require("lib.flow")
-local common = require("lib.campaign.common")
+local common = require("mission_towerfall.campaign.common")
 local speak = common.speak
 
 local encounters = {name = "encounters"}

@@ -1,6 +1,6 @@
 -- Homecoming. One file per bubble, in the order the player crosses them; each returns its legs,
 -- steps, encounters and the objects its seeds leave out. shared.lua names what they share.
-local campaign = require("lib.campaign")
+local campaign = require("mission_towerfall.campaign")
 local shared = require("mission_towerfall.shared")
 
 local bubbles = {

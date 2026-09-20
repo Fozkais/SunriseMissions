@@ -3,7 +3,7 @@
 -- states, its three sensors and its dialogue cues.
 local missions = require("missions")
 local mission = require(missions.MISSION_TOWERFALL)
-local campaign = require("lib.campaign")
+local campaign = require("mission_towerfall.campaign")
 
 local shared = {
     mission = mission,

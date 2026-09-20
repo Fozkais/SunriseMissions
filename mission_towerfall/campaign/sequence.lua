@@ -14,7 +14,7 @@
 -- Each sequence is its own flow graph, so a reattach resumes it and a checkpoint replays it.
 local lib = require("lib.mission_lib")
 local flow = require("lib.flow")
-local common = require("lib.campaign.common")
+local common = require("mission_towerfall.campaign.common")
 local EventKind = require("sunrise.activity_sdk").EventKind
 
 local sequence = {name = "sequence"}

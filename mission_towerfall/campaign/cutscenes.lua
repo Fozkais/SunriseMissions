@@ -8,7 +8,7 @@
 -- A step can end once its cutscene has ended: `ends = {cutscene = true}`. Opening cutscenes stay
 -- in `intro`.
 local lib = require("lib.mission_lib")
-local common = require("lib.campaign.common")
+local common = require("mission_towerfall.campaign.common")
 
 local cutscenes = {name = "cutscenes"}
 

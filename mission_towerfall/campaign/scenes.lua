@@ -7,7 +7,7 @@
 -- The event keys join the activation's generation, so they go out once that activation reaches
 -- transport. Without `keys`, the scene's authored event keys are sent in authored order.
 local lib = require("lib.mission_lib")
-local common = require("lib.campaign.common")
+local common = require("mission_towerfall.campaign.common")
 
 local scenes = {name = "scenes"}
 

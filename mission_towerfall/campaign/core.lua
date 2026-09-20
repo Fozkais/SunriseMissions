@@ -6,7 +6,7 @@
 -- it and replays the step and what follows.
 local lib = require("lib.mission_lib")
 local flow = require("lib.flow")
-local common = require("lib.campaign.common")
+local common = require("mission_towerfall.campaign.common")
 local list, speak = common.list, common.speak
 
 local core = {name = "core"}

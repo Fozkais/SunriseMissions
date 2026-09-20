@@ -12,7 +12,7 @@
 --                      no group, until a `release = {"<encounter id>"}` action lets them route
 local lib = require("lib.mission_lib")
 local combat = require("lib.combat")
-local common = require("lib.campaign.common")
+local common = require("mission_towerfall.campaign.common")
 
 local pathing = {name = "pathing"}
 

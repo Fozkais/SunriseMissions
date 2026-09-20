@@ -11,7 +11,7 @@
 -- They run in that order, after the holder's own scenes. Music plays through the mission's
 -- `music_sensor`. A performed actor has no objective: an `assign` once it has landed gives it one.
 local lib = require("lib.mission_lib")
-local common = require("lib.campaign.common")
+local common = require("mission_towerfall.campaign.common")
 
 local actions = {name = "actions"}
 

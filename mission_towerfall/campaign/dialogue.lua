@@ -5,7 +5,7 @@
 -- count after a restart. The runtime reports a finish only for a cue the script played: a line a
 -- scene plays on its own reports nothing. A Sunrise build without dialogue_finished events refuses
 -- `spoken` when the script loads, rather than leave the wait unmet for good.
-local common = require("lib.campaign.common")
+local common = require("mission_towerfall.campaign.common")
 local EventKind = require("sunrise.activity_sdk").EventKind
 
 local dialogue = {name = "dialogue"}
