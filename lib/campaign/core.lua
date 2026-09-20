@@ -152,6 +152,9 @@ function core.build(content, builder)
         if event.entered == true and event.held_region_index == region then return true end
         return has_intro and intro.done(state) and event.region_index == region
     end}
+    -- A leg is reached on the region change to its region, or on the arrival report that holds
+    -- it. Other client reports never reach the graph: the region one names as pending is only
+    -- requested, and a neighbour streams in that way while the player stands still.
     for _, leg in ipairs(legs) do
         local region = leg.state.region_index
         facts[#facts + 1] = {id = "leg." .. leg.id, observe = function(_, _, event)
@@ -338,13 +341,17 @@ function core.build(content, builder)
     })
 
     -- A trigger reports only once the host arms it, and arming registers its object, so each
-    -- leg arms its triggers when the player reaches it.
-    local function arm(context, region)
+    -- leg arms its triggers when the player reaches it. The arrival region is reported twice,
+    -- as entered and as changed, and a trigger armed again before it reports takes a body the
+    -- client never fires on, so an arm still waiting for its report is kept as it is.
+    local function arm(context, state, region)
         local objects = {}
         for _, leg in ipairs(legs) do
             if leg.state.region_index == region then
                 for _, trigger in ipairs(leg.arm or {}) do
-                    arm_trigger(context, trigger)
+                    if state:variable(armed_key(trigger)) ~= true then
+                        arm_trigger(context, trigger)
+                    end
                     objects[object_of(trigger) or trigger] = true
                 end
                 for _, monitor in ipairs(leg.watch or {}) do
@@ -371,7 +378,7 @@ function core.build(content, builder)
     -- showing is sent again once the new region registers that object.
     local function enter(context, state, event, region)
         local before = active(context, state)
-        local objects = arm(context, region)
+        local objects = arm(context, state, region)
         handle(context, state, event)
         if before == nil or before.directive == nil or active(context, state) ~= before then
             return
