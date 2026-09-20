@@ -52,6 +52,7 @@ campaign.capabilities = {
     require("mission_towerfall.campaign.checkpoints"),
     require("mission_towerfall.campaign.dialogue"),
     require("mission_towerfall.campaign.kills"),
+    require("mission_towerfall.campaign.devices"),
 }
 
 --- Builds the mission table from a content declaration.
