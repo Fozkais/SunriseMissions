@@ -30,6 +30,7 @@ function debug.apply(content)
     local held = {id = content.steps[last].id, barrier = true}
     if goal ~= nil then
         held.directive, held.navpoint, held.waypoint = goal.directive, goal.navpoint, goal.waypoint
+        held.progress = goal.progress
     end
 
     local steps = {held}

@@ -12,12 +12,14 @@ local list, speak = common.list, common.speak
 local core = {name = "core"}
 
 -- A goal without a navpoint keeps its text and shows no marker. Inside the waypoint volume the
--- marker hides. Sending the same goal again moves the marker without a popup.
+-- marker hides. Sending the same goal again moves the marker without a popup. A counter goal
+-- shows its progress values next to its text.
 local function show(content, context, step)
     context:slot(content.directive_sensor):set_directive{
         directive = step.directive,
         navpoint = step.navpoint ~= nil and context:slot(step.navpoint) or nil,
         waypoint = step.waypoint ~= nil and context:slot(step.waypoint) or nil,
+        progress = step.progress,
     }
 end
 
@@ -125,6 +127,15 @@ function core.check(content, builder)
         end
         assert(step.checkpoint == nil or type(step.checkpoint) == "boolean",
             step.id .. " checkpoint must be a boolean")
+        if step.progress ~= nil then
+            assert(step.directive ~= nil and step.directive.counter == true,
+                step.id .. " progress needs a counter directive")
+            assert(type(step.progress) == "table" and #step.progress >= 1
+                and #step.progress <= 4, step.id .. " progress holds one to four integers")
+            for _, value in ipairs(step.progress) do
+                assert(math.type(value) == "integer", step.id .. " progress values are integers")
+            end
+        end
         local hurt = (step.ends or {}).health
         if hurt ~= nil then
             lib.one(hurt.slot, step.id .. " health slot")

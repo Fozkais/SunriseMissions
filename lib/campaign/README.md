@@ -78,6 +78,7 @@ makes a wipe in that region restart the party at that set.
 |---|---|
 | `id` | unique name |
 | `directive`, `navpoint`, `waypoint` | the goal and its map marker; inside the waypoint volume the marker hides |
+| `progress = {n, max}` | with a counter `directive`: the values shown next to its text, such as "Assaults repelled 1/3" |
 | `lines` | `{line(cue), line(cue, filter_volume)}` played when the step starts |
 | `ends` | what finishes the step, see below; a step with no end finishes at once |
 | `barrier = true` | only the step's own end finishes it; otherwise any later step's trigger, monitor or region also does |
