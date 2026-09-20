@@ -34,6 +34,14 @@ local function arm_trigger(context, id)
     context:slot(id):fire_trigger()
 end
 
+-- A Ghost link armed again resets its interaction, so a link armed ahead of its step, through
+-- the `ghost_link` action, is left as it is when the step starts.
+local function arm_ghost_link(context, state, id)
+    if state:variable(armed_key(id)) == true then return end
+    context:set_variable(armed_key(id), true)
+    context:slot(id):set_ghost_link{active = true}
+end
+
 -- A type-30 monitor reports its own entered edge and needs no disarm. One player is enough.
 local function watch_monitor(context, id)
     context:slot(id):set_occupancy_condition{value = 1}
@@ -52,16 +60,15 @@ end
 local function begin(content, builder, step)
     return function(context, state)
         local ends = step.ends or {}
-        if ends.ghost_link ~= nil then
-            context:slot(ends.ghost_link):set_ghost_link{active = true}
-        end
+        if ends.ghost_link ~= nil then arm_ghost_link(context, state, ends.ghost_link) end
         if ends.interact ~= nil then
             context:slot(ends.interact):set_interactable_object{used = true}
         end
         if step.scene ~= nil then context:scene(step.scene):activate{} end
         if step.directive ~= nil then show(content, context, step) end
         speak(content, context, step)
-        -- Arming again reports a player who is already inside the volume.
+        -- A revisited step arms its own triggers, which no leg armed: a trigger armed a second
+        -- time takes a body the client never fires on. Arming reports a player already inside.
         if step.revisit then
             for _, trigger in ipairs(list(ends.trigger)) do arm_trigger(context, trigger) end
         end
@@ -105,6 +112,14 @@ local function any_of(options)
     return {any = unique}
 end
 
+function core.declare(content, builder)
+    -- `ghost_link = Slot.<GL>` on an encounter or a sequence item arms the link ahead of the step
+    -- that ends on it, for a link the client only takes while its room is still being set up.
+    builder:action("ghost_link", function(context, state, _, id)
+        arm_ghost_link(context, state, id)
+    end)
+end
+
 function core.check(content, builder)
     lib.one(content.key, "campaign key")
     lib.one(content.directive_sensor, "directive sensor")
@@ -120,7 +135,12 @@ function core.check(content, builder)
         lib.one(step.id, "step id")
         if step.lines ~= nil then lib.one(content.dialogue_sensor, "dialogue sensor") end
         for _, trigger in ipairs(list((step.ends or {}).trigger)) do
-            assert(armed[trigger], step.id .. " ends on a trigger no leg arms")
+            if step.revisit then
+                assert(not armed[trigger],
+                    step.id .. " revisits a trigger a leg arms: armed twice, it never reports")
+            else
+                assert(armed[trigger], step.id .. " ends on a trigger no leg arms")
+            end
         end
         for _, monitor in ipairs(list((step.ends or {}).monitor)) do
             assert(watched[monitor], step.id .. " ends on a monitor no leg watches")
