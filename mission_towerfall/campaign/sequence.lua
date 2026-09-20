@@ -43,6 +43,8 @@ local function sequenced(content)
 end
 
 function sequence.check(content, builder)
+    local encounter_ids = {}
+    for _, encounter in ipairs(content.encounters or {}) do encounter_ids[encounter.id] = true end
     local legs = builder:need("legs")
     for _, place in ipairs(sequenced(content)) do
         local items = place.holder.sequence
@@ -56,8 +58,12 @@ function sequence.check(content, builder)
                 assert(legs.armed[item.on] or legs.watched[item.on],
                     where .. " waits on a volume no leg arms or watches")
             end
+            -- Services come with declare, after every check: the encounters are read from the
+            -- content here.
             if item.cleared ~= nil then
-                lib.one(builder:find("encounters"), where .. " clear needs encounters")
+                for _, id in ipairs(common.list(item.cleared)) do
+                    assert(encounter_ids[id], where .. " clears an unknown encounter " .. tostring(id))
+                end
             end
             assert(item.after_ms == nil
                 or (math.type(item.after_ms) == "integer" and item.after_ms > 0),
