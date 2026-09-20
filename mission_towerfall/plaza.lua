@@ -40,16 +40,21 @@ plaza.steps = {
     -- A wave ends once its squads are gone, or once every Cabal it placed on the task group has
     -- died by the objective's count, whatever killed it (the client does not report every
     -- squad's members), and the two victims, on no task group and so never counted there, have
-    -- no member alive: Zavala kills them in his scene, or the player does.
+    -- no member alive: Zavala kills them in his scene, or the player does. The client creates
+    -- fewer Cabal than asked at times, so once the wave's pods are all down the count also
+    -- accepts every created member dead.
     {id = "wave1", barrier = true, directive = Directive.ASSAULTS_REPELLED, progress = {0, 3},
         ends = {clear = "wave1",
-            kills = {objective = Slot.OBJ_PLAZA_KILL_CABAL, count = 5, gone = VICTIMS}}},
+            kills = {objective = Slot.OBJ_PLAZA_KILL_CABAL, count = 5, of = WAVE_1,
+                gone = VICTIMS}}},
     {id = "wave2", barrier = true, directive = Directive.ASSAULTS_REPELLED, progress = {1, 3},
         ends = {clear = "wave2",
-            kills = {objective = Slot.OBJ_PLAZA_KILL_CABAL, count = 11, gone = VICTIMS}}},
+            kills = {objective = Slot.OBJ_PLAZA_KILL_CABAL, count = 11, of = WAVE_2,
+                settle_ms = 45000, gone = VICTIMS}}},
     {id = "wave3", barrier = true, directive = Directive.ASSAULTS_REPELLED, progress = {2, 3},
         ends = {clear = "wave3",
-            kills = {objective = Slot.OBJ_PLAZA_KILL_CABAL, count = 10, gone = VICTIMS}}},
+            kills = {objective = Slot.OBJ_PLAZA_KILL_CABAL, count = 10, of = WAVE_3,
+                settle_ms = 45000, gone = VICTIMS}}},
     {id = "repelled", barrier = true, directive = Directive.ASSAULTS_REPELLED, progress = {3, 3},
         ends = {sequence = true}, sequence = {
             {after_ms = 1500, lines = {line(cue.CUE_59)}},
@@ -87,6 +92,26 @@ local CARRIERS = {
 local function fighter(squad, source, count)
     return unit(squad, source, GROUP, count)
 end
+
+-- The fighters of each assault, for the count of the members the client creates.
+local WAVE_1 = {
+    fighter(Squad.SQ_PLAZA_REINFORCE_A_A, Slot.SQ_PLAZA_REINFORCE_A_A, 2),
+    fighter(Squad.SQ_PLAZA_REINFORCE_START_B, Slot.SQ_PLAZA_REINFORCE_START_B, 2),
+    fighter(Squad.SQ_PLAZA_REINFORCE_A_B, Slot.SQ_PLAZA_REINFORCE_A_B, 1),
+}
+local WAVE_2 = {
+    fighter(Squad.SQ_PLAZA_REINFORCE_A_D, Slot.SQ_PLAZA_REINFORCE_A_D, 2),
+    fighter(Squad.SQ_PLAZA_REINFORCE_A_B, Slot.SQ_PLAZA_REINFORCE_A_B, 2),
+    fighter(Squad.SQ_PLAZA_REINFORCE_A_D_EXTRA, Slot.SQ_PLAZA_REINFORCE_A_D_EXTRA, 3),
+    fighter(Squad.SQ_PLAZA_INTERIM_A_A, Slot.SQ_PLAZA_INTERIM_A_A, 2),
+}
+local WAVE_3 = {
+    fighter(Squad.SQ_PLAZA_INTERIM_A_B, Slot.SQ_PLAZA_INTERIM_A_B, 2),
+    fighter(Squad.SQ_PLAZA_REINFORCE_B_A, Slot.SQ_PLAZA_REINFORCE_B_A, 2),
+    fighter(Squad.SQ_PLAZA_REINFORCE_A_B, Slot.SQ_PLAZA_REINFORCE_A_B, 2),
+    fighter(Squad.SQ_PLAZA_REINFORCE_B_B, Slot.SQ_PLAZA_REINFORCE_B_B, 2),
+    fighter(Squad.SQ_PLAZA_REINFORCE_B_A_EXTRA, Slot.SQ_PLAZA_REINFORCE_B_A_EXTRA, 2),
+}
 
 -- Zavala is one squad member: each of his scenes binds his cell, so it plays on that member
 -- instead of creating an actor of its own. The combat scene plays with no key; the bunker shield
