@@ -29,6 +29,11 @@ local function place_units(context, objective, units, approach)
     end
 end
 
+-- A squad that reported members alive in this attempt: the mark is a mission variable.
+local function seen_key(context, source)
+    return "seen." .. tostring(context.attempt_generation) .. "." .. source
+end
+
 local function populate(content, builder, context, state, encounter)
     place_units(context, encounter.objective, encounter.squads, encounter.approach)
     speak(content, context, encounter)
@@ -85,15 +90,49 @@ function encounters.declare(content, builder)
     for _, encounter in ipairs(content.encounters or {}) do placed[encounter.id] = encounter end
     -- `graph` is the placement graph, set by build; nil when no encounter declares a placement.
     local service = {}
+    --- An encounter's squads are its own and the ones its sequence items place; a cohort with a
+    --- squad not placed yet is not cleared, so the condition waits for the whole sequence. The
+    --- runtime's own `cleared` also wants every requested member seen, and the client places
+    --- fewer than asked at times, so a cohort whose every squad reported members alive once in
+    --- this attempt and now reports none alive counts as cleared too.
     --- @return A condition that holds once every squad of the named encounters is gone.
     function service.cleared(ids)
-        local squads = {}
+        local units = {}
         for _, id in ipairs(ids) do
-            for _, unit in ipairs(lib.one(placed[id], "encounter " .. id).squads) do
-                squads[#squads + 1] = unit.squad
+            local encounter = lib.one(placed[id], "encounter " .. id)
+            local own = 0
+            for _, unit in ipairs(encounter.squads or {}) do
+                units[#units + 1], own = unit, own + 1
+            end
+            for _, item in ipairs(encounter.sequence or {}) do
+                for _, unit in ipairs(item.place ~= nil and item.place.squads or {}) do
+                    units[#units + 1], own = unit, own + 1
+                end
+            end
+            assert(own > 0, "encounter " .. id .. " places no squad to clear")
+        end
+        return service.gone(units)
+    end
+    --- @return A condition that holds once every listed unit's squad is gone, as `cleared`
+    --- reads it. A squad listed twice is one member of the cohort.
+    function service.gone(units)
+        local seen, unique, sources = {}, {}, {}
+        for _, unit in ipairs(units) do
+            if not seen[unit.squad] then
+                seen[unit.squad], unique[#unique + 1] = true, unit.squad
+                sources[#sources + 1] = unit.source
             end
         end
-        return function(context) return context:cohort{squads = squads}.cleared end
+        assert(#unique > 0, "a clear needs at least one squad")
+        return function(context, state)
+            local cohort = context:cohort{squads = unique}
+            if cohort.cleared then return true end
+            if cohort.alive_count ~= 0 then return false end
+            for _, source in ipairs(sources) do
+                if state:variable(seen_key(context, source)) ~= true then return false end
+            end
+            return true
+        end
     end
     --- @return True once the named encounter has placed in this attempt.
     function service.placed(context, state, id)
@@ -103,6 +142,13 @@ function encounters.declare(content, builder)
 end
 
 function encounters.build(content, builder)
+    -- Which squads have had members alive, for the clear conditions.
+    builder:on("on_event_squad_state", function(context, _, event)
+        local id = event.slot ~= nil and event.slot.id or nil
+        if id ~= nil and (event.alive_count or 0) > 0 then
+            context:set_variable(seen_key(context, id), true)
+        end
+    end)
     local facts, fact_of, graph = {}, {}, nil
     for _, encounter in ipairs(content.encounters or {}) do
         local source = encounter.trigger or encounter.monitor

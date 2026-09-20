@@ -94,8 +94,8 @@ makes a wipe in that region restart the party at that set.
 |---|---|
 | `trigger = slot` or a list | the player crossed the volume |
 | `monitor = slot` or a list | a player entered the type-30 volume |
-| `region = "<leg id>"` | the client reached that leg |
-| `clear = "<encounter id>"` or a list | every squad of those encounters is gone |
+| `region = "<leg id>"` | the client changed to that leg's region; before that, anything sent to the region's slots is refused |
+| `clear = "<encounter id>"` or a list | every squad of those encounters is gone, the ones their sequence items place included |
 | `ghost_link = slot` | the Ghost scan started and completed |
 | `interact = slot` | the object was used (its interaction row is sent when the step starts) |
 | `scene = slot` | the type-43 scene slot reported finished |
@@ -159,7 +159,7 @@ for at most one event, then for its delay, then acts:
 | `on = slot` | the trigger or monitor reported; a report before the item is reached counts |
 | `finished = slot` | the scene slot reported finished after the previous item acted |
 | `interacted = slot` | the object reported a use after the previous item acted |
-| `cleared = "<encounter id>"` or a list | every squad of those encounters is gone |
+| `cleared = "<encounter id>"` or a list | every squad of those encounters is gone, the ones their sequence items place included |
 | `spoken = cue` | the cue, played by the script, finished in this attempt; a finish before the item is reached counts |
 | `after_ms = n` | n milliseconds passed after the wait held |
 
