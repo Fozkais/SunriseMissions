@@ -51,6 +51,7 @@ campaign.capabilities = {
     require("lib.campaign.cutscenes"),
     require("lib.campaign.checkpoints"),
     require("lib.campaign.dialogue"),
+    require("lib.campaign.kills"),
 }
 
 --- Builds the mission table from a content declaration.

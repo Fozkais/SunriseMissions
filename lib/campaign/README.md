@@ -101,6 +101,7 @@ makes a wipe in that region restart the party at that set.
 | `scene = slot` | the type-43 scene slot reported finished |
 | `health = {slot = slot, at = 0.5}` | the combatant's health fell to that fraction |
 | `destroyed = {slots}` | every listed object was destroyed |
+| `kills = {objective = slot, count = n, gone = {unit(...)}}` | the objective's task counters rose by `n` kills since the step started (counts squads a cohort never sees alive), and the `gone` squads, which the objective does not count, have no member alive |
 | `sequence = true` | the step's own sequence finished |
 | `cutscene = true` | the step's own cutscene ended |
 | `spoken = cue` | the cue, played by the script, finished in this attempt |
@@ -336,6 +337,7 @@ again. When the outro ends, the last step is done and the mission completes.
 | `checkpoints` | `spawn_set`, wipes and replays |
 | `dialogue` | the `spoken` wait and end; needs a Sunrise build with `dialogue_finished` events |
 | `pathing` | `groups`, `approach`, `hold` and the `release` action |
+| `kills` | the `kills` end |
 
 A capability is a module with a `name` and up to three passes. Each pass runs for every capability,
 in list order, before the next pass starts:
